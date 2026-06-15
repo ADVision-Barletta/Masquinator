@@ -474,50 +474,148 @@
     setTimeout(function() { mq_showScreen('results'); }, 1200);
   }
 
-  function mq_encodeResults() {
-    if (!mq_lastResults || mq_lastResults.length === 0) return '';
-    var compact = mq_lastResults.map(function(item) {
-      return { t: item.titolo, c: item.ui_category, q: item.qty || '1x', p: item.prezzo || '', d: item.descrizione || '' };
+  function mq_wrapText(ctx, text, maxWidth) {
+    var words = text.split(' ');
+    var lines = [];
+    var currentLine = '';
+    for (var i = 0; i < words.length; i++) {
+      var testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+      if (ctx.measureText(testLine).width > maxWidth && i > 0) {
+        lines.push(currentLine);
+        currentLine = words[i];
+      } else {
+        currentLine = testLine;
+      }
+    }
+    lines.push(currentLine);
+    return lines;
+  }
+
+  window.mq_downloadImage = function() {
+    if (!mq_lastResults || mq_lastResults.length === 0) return;
+    var items = mq_lastResults;
+
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    var PAD = 30;
+    var W = 500;
+    var LEFT = PAD + 14;
+    var RIGHT = W - PAD;
+    var MAX_W = RIGHT - LEFT;
+
+    ctx.font = 'bold 28px "Playfair Display","Georgia",serif';
+    var titleTxt = 'Il Genio del Masque presenta:';
+    var titleW = ctx.measureText(titleTxt).width;
+    var titleLines = titleW > MAX_W ? mq_wrapText(ctx, titleTxt, MAX_W) : [titleTxt];
+    var titleH = titleLines.length * 34 + 10;
+
+    var catH = 16;
+    var titleH2 = 24;
+    var descH = 18;
+    var itemGap = 10;
+
+    var totalItemsH = 0;
+    items.forEach(function(item) {
+      var h = catH + titleH2 + itemGap;
+      if (item.descrizione) {
+        ctx.font = '12px "Inter","Arial",sans-serif';
+        var dLines = mq_wrapText(ctx, item.descrizione, MAX_W);
+        h += dLines.length * descH;
+      }
+      totalItemsH += h;
     });
-    try {
-      var json = JSON.stringify(compact);
-      var base64 = btoa(encodeURIComponent(json));
-      return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    } catch (e) {
-      return '';
-    }
-  }
 
-  function mq_buildShareUrl() {
-    var data = mq_encodeResults();
-    if (!data) return '';
-    var base = window.location.href.split('?')[0].split('#')[0];
-    return base + '?mq_data=' + encodeURIComponent(data);
-  }
+    var footerH = 50;
+    var H = PAD + 60 + titleH + 24 + totalItemsH + footerH + PAD;
 
-  window.mq_shareResults = function() {
-    var url = mq_buildShareUrl();
-    if (!url) return;
-    if (navigator.share) {
-      navigator.share({ title: 'Masquinator', text: 'La mia pergamena dal Genio del Masque', url: url }).catch(function() {});
-    } else {
-      mq_showQR(url);
-    }
+    canvas.width = W;
+    canvas.height = H;
+
+    var grad = ctx.createRadialGradient(W / 2, 60, 0, W / 2, 60, W);
+    grad.addColorStop(0, '#2a1111');
+    grad.addColorStop(1, '#07070a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    var y = PAD;
+
+    ctx.font = '40px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('\uD83C\uDFAD', W / 2, y + 40);
+    y += 55;
+
+    ctx.fillStyle = '#c5a059';
+    ctx.font = 'bold 28px "Playfair Display","Georgia",serif';
+    ctx.textAlign = 'center';
+    titleLines.forEach(function(l) { ctx.fillText(l, W / 2, y); y += 34; });
+
+    ctx.fillStyle = '#8c8273';
+    ctx.font = '11px "Inter","Arial",sans-serif';
+    ctx.fillText('LA PERGAMENA DEI VOSTRI DESIDERI', W / 2, y);
+    y += 20;
+
+    items.forEach(function(item) {
+      var descLineCount = 0;
+      if (item.descrizione) {
+        ctx.font = '12px "Inter","Arial",sans-serif';
+        descLineCount = mq_wrapText(ctx, item.descrizione, MAX_W).length;
+      }
+      ctx.fillStyle = '#c5a059';
+      ctx.fillRect(PAD, y - 5, 3, catH + titleH2 + 10 + descLineCount * descH);
+
+      ctx.fillStyle = '#c5a059';
+      ctx.font = '10px "Inter","Arial",sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText((item.ui_category || '').toUpperCase(), LEFT, y);
+      y += catH;
+
+      ctx.fillStyle = '#f4ebd8';
+      ctx.font = '500 17px "Playfair Display","Georgia",serif';
+      ctx.textAlign = 'left';
+      var titleStr = (item.qty ? item.qty + ' ' : '') + (item.titolo || '');
+      var availW = item.prezzo ? MAX_W - 90 : MAX_W;
+      if (ctx.measureText(titleStr).width > availW) {
+        while (ctx.measureText(titleStr + '...').width > availW && titleStr.length > 3) titleStr = titleStr.slice(0, -1);
+        titleStr += '...';
+      }
+      ctx.fillText(titleStr, LEFT, y);
+
+      if (item.prezzo) {
+        var pText = item.prezzo + '\u20AC';
+        ctx.fillStyle = '#c5a059';
+        ctx.font = '500 14px "Inter","Arial",sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(pText, RIGHT, y);
+      }
+      y += titleH2;
+
+      if (item.descrizione) {
+        ctx.fillStyle = '#8c8273';
+        ctx.font = '12px "Inter","Arial",sans-serif';
+        ctx.textAlign = 'left';
+        var descLines = mq_wrapText(ctx, item.descrizione, MAX_W);
+        descLines.forEach(function(l) { ctx.fillText(l, LEFT, y); y += descH; });
+      }
+
+      y += itemGap;
+    });
+
+    y += 5;
+    ctx.fillStyle = '#c5a059';
+    ctx.font = 'italic 14px "Playfair Display","Georgia",serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Porta questa pergamena allo staff del ristorante.', W / 2, y);
+
+    canvas.toBlob(function(blob) {
+      var a = document.createElement('a');
+      a.download = 'pergamena-masquinator.png';
+      a.href = URL.createObjectURL(blob);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+    });
   };
-
-  window.mq_generateQR = function() {
-    var url = mq_buildShareUrl();
-    if (!url) return;
-    mq_showQR(url);
-  };
-
-  function mq_showQR(url) {
-    var qrImg = document.getElementById('mq-qr-img');
-    var qrLink = document.getElementById('mq-qr-link');
-    if (qrImg) qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(url);
-    if (qrLink) qrLink.href = url;
-    mq_showScreen('qrcode');
-  }
 
   function mq_formatPrice(item) {
     if (item.priceOverride) {

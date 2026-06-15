@@ -11,71 +11,10 @@ class Shortcode {
         add_shortcode('masquinator', [$this, 'render']);
     }
 
-    private function decodeResultsData(string $data): array {
-        $safe = strtr($data, '-_', '+/');
-        $remainder = strlen($safe) % 4;
-        if ($remainder) {
-            $safe .= str_repeat('=', 4 - $remainder);
-        }
-        $raw = base64_decode($safe, true);
-        if (!$raw) {
-            return [];
-        }
-        $decoded = json_decode(urldecode($raw), true);
-        if (!is_array($decoded)) {
-            return [];
-        }
-        return $decoded;
-    }
-
-    private function renderResults(string $data_param): string {
-        $items = $this->decodeResultsData($data_param);
-        if (empty($items)) {
-            return '<p>' . esc_html__('Dati non validi.', 'masquinator') . '</p>';
-        }
-
-        ob_start();
-        ?>
-        <div class="mq-standalone-results">
-            <div class="mq-mascot-container">
-                <div class="mq-mascot-emoji">🎭</div>
-            </div>
-            <h1 class="mq-title-serif"><?php esc_html_e('Il Genio del Masque presenta:', 'masquinator'); ?></h1>
-            <p class="mq-subtitle"><?php esc_html_e('La pergamena dei vostri desideri', 'masquinator'); ?></p>
-            <div class="mq-menu-list">
-                <?php foreach ($items as $item): ?>
-                <div class="mq-plate">
-                    <span class="mq-plate-category"><?php echo esc_html($item['c'] ?? ''); ?></span>
-                    <h3 class="mq-plate-title-row">
-                        <?php if (!empty($item['q'])): ?>
-                        <span class="mq-plate-qty"><?php echo esc_html($item['q']); ?></span>
-                        <?php endif; ?>
-                        <?php echo esc_html($item['t'] ?? ''); ?>
-                        <?php if (!empty($item['p'])): ?>
-                        <span class="mq-plate-price"><?php echo esc_html($item['p']); ?>€</span>
-                        <?php endif; ?>
-                    </h3>
-                    <?php if (!empty($item['d'])): ?>
-                    <p class="mq-plate-desc"><?php echo esc_html($item['d']); ?></p>
-                    <?php endif; ?>
-                </div>
-                <?php endforeach; ?>
-            </div>
-            <p class="mq-staff-note"><?php esc_html_e('Porta questa lista allo staff del ristorante.', 'masquinator'); ?></p>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
     public function render(array $atts = []): string {
         $options = get_option('masquinator_settings', []);
         if (empty($options['enabled'])) {
             return '';
-        }
-
-        $data_param = isset($_GET['mq_data']) ? sanitize_text_field(wp_unslash($_GET['mq_data'])) : '';
-        if ($data_param) {
-            return $this->renderResults($data_param);
         }
 
         ob_start();
@@ -145,24 +84,8 @@ class Shortcode {
                             <div id="mq-menu-output" class="mq-menu-list"></div>
 
                             <div class="mq-footer">
-                                <button class="mq-btn mq-btn-gold" onclick="mq_generateQR()"><?php esc_html_e('Mostra questa pergamena allo staff', 'masquinator'); ?></button>
+                                <button class="mq-btn mq-btn-gold" onclick="mq_downloadImage()"><?php esc_html_e('Scarica la pergamena', 'masquinator'); ?></button>
                                 <button class="mq-btn mq-btn-outline" onclick="mq_resetToStart()"><?php esc_html_e('Cala il Sipario (Riprova)', 'masquinator'); ?></button>
-                            </div>
-                        </div>
-
-                        <div id="mq-qrcode" class="mq-screen">
-                            <div class="mq-mascot-container mq-mascot-tiny">
-                                <div class="mq-mascot-emoji">🎭</div>
-                            </div>
-                            <h2 class="mq-title-serif"><?php esc_html_e('La tua pergamena', 'masquinator'); ?></h2>
-                            <p class="mq-subtitle"><?php esc_html_e('Mostra questo codice allo staff', 'masquinator'); ?></p>
-                            <div class="mq-qr-wrapper">
-                                <img id="mq-qr-img" class="mq-qr-img" src="" alt="QR Code">
-                                <a id="mq-qr-link" class="mq-qr-link" href="#" target="_blank"><?php esc_html_e('Apri link', 'masquinator'); ?></a>
-                            </div>
-                            <div class="mq-actions-stack">
-                                <button class="mq-btn mq-btn-gold" onclick="mq_shareResults()"><?php esc_html_e('Condividi', 'masquinator'); ?></button>
-                                <button class="mq-btn mq-btn-outline" onclick="mq_showScreen('results')"><?php esc_html_e('Torna ai risultati', 'masquinator'); ?></button>
                             </div>
                         </div>
                     </div>
