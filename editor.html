@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- L'editor non deve essere indicizzato dai motori di ricerca -->
+<meta name="robots" content="noindex,nofollow">
+<title>Masque Studio — Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+<link id="prev-font" rel="stylesheet" href="">
+<style>
+  :root{--ui-bg:#0c0c10;--ui-panel:#14141b;--ui-line:#26262f;--ui-text:#e9e7e0;--ui-muted:#8b8a93;--ui-gold:#c5a059}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ui-bg);color:var(--ui-text);font-family:'Inter',sans-serif;font-size:14px}
+  .studio-head{padding:18px 24px;border-bottom:1px solid var(--ui-line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .studio-head h1{font-family:'Playfair Display',serif;font-style:italic;font-size:22px;margin:0;color:var(--ui-gold)}
+  .studio-head span{color:var(--ui-muted);font-size:12px;letter-spacing:2px;text-transform:uppercase}
+
+  .layout{display:grid;grid-template-columns:400px 1fr;min-height:calc(100vh - 61px)}
+  @media (max-width:880px){.layout{grid-template-columns:1fr}}
+
+  .controls{padding:20px 24px 60px;border-right:1px solid var(--ui-line);overflow-y:auto}
+  .group{margin-bottom:26px}
+  .group>h2{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ui-gold);margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid var(--ui-line)}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12px;color:var(--ui-muted);margin-bottom:6px}
+  .row{display:flex;align-items:center;gap:10px}
+  input[type=text],input[type=url],select,textarea{width:100%;background:#1d1d26;border:1px solid var(--ui-line);color:var(--ui-text);border-radius:8px;padding:9px 10px;font-family:inherit;font-size:13px}
+  textarea{resize:vertical;min-height:60px;line-height:1.5}
+  input[type=color]{width:42px;height:34px;border:1px solid var(--ui-line);border-radius:8px;background:#1d1d26;padding:2px;cursor:pointer}
+  input[type=range]{width:100%;accent-color:var(--ui-gold)}
+  .hex{flex:1;font-family:monospace}
+  .val{color:var(--ui-gold);font-size:12px;min-width:46px;text-align:right}
+  .seg{display:flex;border:1px solid var(--ui-line);border-radius:8px;overflow:hidden}
+  .seg button{flex:1;background:#1d1d26;border:0;color:var(--ui-muted);padding:9px;cursor:pointer;font-family:inherit;font-size:13px}
+  .seg button.on{background:var(--ui-gold);color:#000;font-weight:600}
+  .filebtn{display:inline-block;background:#1d1d26;border:1px solid var(--ui-line);border-radius:8px;padding:9px 12px;cursor:pointer;color:var(--ui-text);font-size:13px}
+  .filebtn:hover{border-color:var(--ui-gold)}
+  input[type=file]{display:none}
+  .switch{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+  .hint{font-size:11px;color:var(--ui-muted);margin-top:6px;line-height:1.5}
+  details{border:1px solid var(--ui-line);border-radius:8px;margin-bottom:10px;background:#15151d}
+  details summary{cursor:pointer;padding:10px 12px;font-size:13px;color:var(--ui-text);list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary:before{content:"▸ ";color:var(--ui-gold)}
+  details[open] summary:before{content:"▾ "}
+  details .inner{padding:0 12px 12px}
+  .ans-label{font-size:11px;color:var(--ui-muted);margin:8px 0 4px}
+
+  .actions{position:sticky;bottom:0;background:linear-gradient(transparent,var(--ui-bg) 30%);padding-top:18px;display:flex;flex-direction:column;gap:10px}
+  .btn{border:0;border-radius:10px;padding:13px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;text-align:center}
+  .btn-gold{background:var(--ui-gold);color:#000}
+  .btn-ghost{background:transparent;border:1px solid var(--ui-line);color:var(--ui-muted)}
+  .btn-ghost:hover{border-color:var(--ui-gold);color:var(--ui-text)}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ui-gold);color:#000;padding:11px 20px;border-radius:30px;font-weight:600;font-size:13px;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+
+  /* ANTEPRIMA */
+  .stage{padding:30px;display:flex;justify-content:center;align-items:flex-start}
+  .mq-preview{
+    --mq-bg-dark:#07070a;--mq-spotlight:radial-gradient(circle at 50% 30%, #2a1111 0%, #07070a 65%);
+    --mq-gold:#c5a059;--mq-gold-hover:#e0bc75;--mq-text-light:#f4ebd8;--mq-text-muted:#8c8273;
+    --font-serif:'Playfair Display',serif;--font-sans:'Inter',sans-serif;
+    --mq-radius-btn:50px;--mq-radius-plate:0px;--mq-border-width:1px;--mq-btn-gap:12px;--mq-btn-pad-y:18px;
+    --mq-title-weight:700;--mq-body-weight:400;--mq-title-italic:italic;--mq-body-italic:normal;
+    --mq-size-title:34px;--mq-size-subtitle:13px;--mq-size-dialog:19px;
+    width:100%;max-width:440px;border-radius:18px;overflow:hidden;border:1px solid var(--ui-line);
+    background-color:var(--mq-bg-dark);background-image:var(--mq-spotlight);background-size:cover;background-position:center;
+    color:var(--mq-text-light);font-family:var(--font-sans);padding:34px 26px 40px;text-align:center}
+  .mq-preview .plogo{display:none;max-width:150px;max-height:70px;margin:0 auto 16px;object-fit:contain}
+  .mq-preview .mascot{width:96px;height:96px;margin:0 auto 18px;border-radius:50%;background:radial-gradient(circle, rgba(197,160,89,.15) 0%, transparent 70%);display:flex;align-items:center;justify-content:center}
+  .mq-preview .mascot .emo{font-size:58px;line-height:1;filter:drop-shadow(0 10px 15px rgba(0,0,0,.8))}
+  .mq-preview .mascot img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 15px rgba(0,0,0,.8))}
+  .mq-preview .ptitle{font-family:var(--font-serif);font-size:var(--mq-size-title);font-weight:var(--mq-title-weight);font-style:var(--mq-title-italic);color:var(--mq-gold);margin:0 0 4px}
+  .mq-preview .psub{font-size:var(--mq-size-subtitle);text-transform:uppercase;letter-spacing:3px;color:var(--mq-text-muted);margin:0 0 26px;font-weight:var(--mq-body-weight);font-style:var(--mq-body-italic)}
+  .mq-preview .pbubble{font-family:var(--font-serif);font-size:var(--mq-size-dialog);font-weight:var(--mq-body-weight);font-style:var(--mq-body-italic);line-height:1.5;margin:0 auto 26px;max-width:92%}
+  .mq-preview .pbtn{width:100%;padding:var(--mq-btn-pad-y) 22px;border-radius:var(--mq-radius-btn);font-family:var(--font-sans);font-size:15px;background:rgba(0,0,0,.4);border:var(--mq-border-width) solid rgba(197,160,89,.35);color:var(--mq-text-light);margin-bottom:var(--mq-btn-gap)}
+  .mq-preview .pbtn-gold{background:var(--mq-gold);color:#000;font-weight:600;border:0;font-size:16px}
+  .mq-preview .plate{text-align:left;border-left:2px solid var(--mq-gold);border-radius:var(--mq-radius-plate);padding-left:18px;margin-top:28px}
+  .mq-preview .plate .cat{font-size:11px;letter-spacing:1.5px;color:var(--mq-gold);text-transform:uppercase;display:block;margin-bottom:6px}
+  .mq-preview .plate .ttl{font-family:var(--font-serif);font-size:17px;font-weight:500;margin:0 0 5px}
+  .mq-preview .plate .ttl .price{color:var(--mq-gold);float:right;font-family:var(--font-sans);font-size:15px}
+  .mq-preview .plate .desc{font-size:13px;color:var(--mq-text-muted);line-height:1.5;margin:0;font-weight:300}
+  @media (min-width:881px){.stage{position:sticky;top:0;height:calc(100vh - 61px);align-items:center}}
+
+  /* Cancello passphrase (deterrente) */
+  #gate{position:fixed;inset:0;background:var(--ui-bg);display:none;align-items:center;justify-content:center;z-index:100;flex-direction:column;gap:14px}
+  #gate input{max-width:260px;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- Cancello opzionale: attivo solo se EDITOR_PASS è impostato in fondo al file -->
+<div id="gate">
+  <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:22px;color:var(--ui-gold)">Masque Studio</div>
+  <input type="password" id="gatePass" placeholder="Passphrase">
+  <button class="btn btn-gold" id="gateBtn" style="padding:10px 26px">Entra</button>
+  <p class="hint" style="max-width:300px;text-align:center">Solo deterrente: per una vera protezione tieni questo file in locale o dietro Cloudflare Access / autenticazione del server.</p>
+</div>
+
+<div class="studio-head">
+  <h1>Masque Studio</h1>
+  <span>Editor estetico &amp; testi</span>
+  <span id="file-warning" style="display:none;color:#e0bc75;font-size:11px;letter-spacing:1px;margin-left:auto">
+    File aperto in locale: il download/copia useranno un riquadro di fallback
+  </span>
+</div>
+
+<div class="layout">
+  <div class="controls">
+
+    <div class="group">
+      <h2>Colori</h2>
+      <div class="field"><label>Sfondo</label><div class="row"><input type="color" data-color="bg"><input class="hex" type="text" data-hex="bg"></div></div>
+      <div class="field"><label>Alone / riflettore</label><div class="row"><input type="color" data-color="spotlight"><input class="hex" type="text" data-hex="spotlight"></div></div>
+      <div class="field"><label>Accento (oro)</label><div class="row"><input type="color" data-color="primary"><input class="hex" type="text" data-hex="primary"></div></div>
+      <div class="field"><label>Accento in hover</label><div class="row"><input type="color" data-color="primaryHover"><input class="hex" type="text" data-hex="primaryHover"></div></div>
+      <div class="field"><label>Testo chiaro</label><div class="row"><input type="color" data-color="textLight"><input class="hex" type="text" data-hex="textLight"></div></div>
+      <div class="field"><label>Testo attenuato</label><div class="row"><input type="color" data-color="textMuted"><input class="hex" type="text" data-hex="textMuted"></div></div>
+    </div>
+
+    <div class="group">
+      <h2>Sfondo</h2>
+      <div class="field"><label>Tipo</label>
+        <div class="seg" id="bgSeg">
+          <button data-bg="spotlight" class="on">Riflettore</button>
+          <button data-bg="image">Immagine</button>
+        </div></div>
+      <div id="bgImageFields" style="display:none">
+        <div class="field"><label>Immagine di sfondo</label>
+          <label class="filebtn">Scegli file… <input type="file" id="bgFile" accept="image/*"></label>
+          <input type="url" id="bgUrl" placeholder="…oppure URL" style="margin-top:8px"></div>
+        <div class="field"><label>Velo scuro (leggibilità) <span class="val" id="bgOvV"></span></label>
+          <input type="range" id="bgOv" min="0" max="0.9" step="0.05"></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2>Tipografia</h2>
+
+      <div class="field"><label>Font dei titoli (display)</label>
+        <select id="serifSel"></select>
+        <input type="text" id="serifCustom" placeholder="Nome esatto del Google Font" style="margin-top:8px;display:none"></div>
+      <div class="field"><label>Peso titoli</label>
+        <div class="seg" id="twSeg">
+          <button data-tw="light">Leggero</button>
+          <button data-tw="normal">Normale</button>
+          <button data-tw="medium">Medio</button>
+          <button data-tw="bold">Grassetto</button>
+        </div></div>
+      <div class="field"><label class="switch"><input type="checkbox" id="titleItalic"> Titoli in corsivo</label></div>
+      <div class="field"><label>Dimensione del titolo principale <span class="val" id="szTV"></span></label>
+        <input type="range" id="szT" min="20" max="56" step="1"></div>
+      <div class="field"><label>Dimensione del sottotitolo <span class="val" id="szSV"></span></label>
+        <input type="range" id="szS" min="10" max="22" step="1"></div>
+
+      <div class="field" style="margin-top:18px"><label>Font del corpo</label>
+        <select id="sansSel"></select>
+        <input type="text" id="sansCustom" placeholder="Nome esatto del Google Font" style="margin-top:8px;display:none"></div>
+      <div class="field"><label>Peso del corpo</label>
+        <div class="seg" id="bwSeg">
+          <button data-bw="light">Leggero</button>
+          <button data-bw="normal">Normale</button>
+          <button data-bw="medium">Medio</button>
+          <button data-bw="bold">Grassetto</button>
+        </div></div>
+      <div class="field"><label class="switch"><input type="checkbox" id="bodyItalic"> Corpo in corsivo</label></div>
+      <div class="field"><label>Dimensione del dialogo (domande) <span class="val" id="szDV"></span></label>
+        <input type="range" id="szD" min="14" max="28" step="1"></div>
+
+      <p class="hint">Pesi e corsivi vengono caricati su misura dal Google Font scelto. Se il font non ha quel peso o non ha il corsivo, il browser ne sintetizza uno simile.</p>
+    </div>
+
+    <div class="group">
+      <h2>Forme e spaziatura</h2>
+      <div class="field"><label>Arrotondamento bottoni <span class="val" id="rbtnV"></span></label><input type="range" id="rbtn" min="0" max="50" step="1"></div>
+      <div class="field"><label>Arrotondamento schede <span class="val" id="rplateV"></span></label><input type="range" id="rplate" min="0" max="24" step="1"></div>
+      <div class="field"><label>Spessore bordi <span class="val" id="bwV"></span></label><input type="range" id="bw" min="0" max="4" step="1"></div>
+      <div class="field"><label>Spazio tra i bottoni <span class="val" id="gapV"></span></label><input type="range" id="gap" min="6" max="28" step="1"></div>
+      <div class="field"><label>Ariosità bottoni <span class="val" id="padV"></span></label><input type="range" id="pad" min="10" max="26" step="1"></div>
+    </div>
+
+    <div class="group">
+      <h2>Logo cliente</h2>
+      <div class="field"><label class="switch"><input type="checkbox" id="logoShow"> Mostra il logo sopra il titolo</label></div>
+      <div class="field"><label>Carica un'immagine</label><label class="filebtn">Scegli file… <input type="file" id="logoFile" accept="image/*"></label></div>
+      <div class="field"><label>…oppure incolla un URL</label><input type="url" id="logoUrl" placeholder="https://…"></div>
+      <p class="hint">Il file caricato viene incorporato nel tema (base64): nessun hosting esterno. Consigliato un PNG leggero.</p>
+    </div>
+
+    <div class="group">
+      <h2>Mascotte</h2>
+      <div class="field"><label>Tipo</label>
+        <div class="seg" id="mascSeg"><button data-masc="emoji" class="on">Emoji</button><button data-masc="image">Immagine</button></div></div>
+      <div class="field" id="mascEmojiField"><label>Emoji</label><input type="text" id="mascEmoji" maxlength="4"></div>
+      <div class="field" id="mascImgField" style="display:none">
+        <label>Immagine mascotte</label>
+        <label class="filebtn">Scegli file… <input type="file" id="mascFile" accept="image/*"></label>
+        <input type="url" id="mascUrl" placeholder="…oppure URL" style="margin-top:8px"></div>
+    </div>
+
+    <div class="group">
+      <h2>Identità testuale</h2>
+      <div class="field"><label>Titolo dell'app</label><input type="text" id="txtTitle"></div>
+      <div class="field"><label>Sottotitolo</label><input type="text" id="txtSub"></div>
+    </div>
+
+    <div class="group">
+      <h2>Testi del copione</h2>
+      <details open>
+        <summary>Schermata iniziale</summary>
+        <div class="inner">
+          <div class="field"><label>Frase di benvenuto</label><textarea id="startBubble"></textarea></div>
+          <div class="field"><label>Testo del bottone</label><input type="text" id="startButton"></div>
+        </div>
+      </details>
+      <div id="qEditor"></div>
+      <p class="hint">Qui modifichi solo i testi mostrati. La logica (i tag che scelgono i piatti) resta intatta: cambiare le parole non altera i risultati.</p>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-gold" id="dlBtn">Scarica theme.js</button>
+      <button class="btn btn-ghost" id="copyBtn">Copia il codice</button>
+      <label class="btn btn-ghost">Importa un theme.js esistente<input type="file" id="importFile" accept=".js"></label>
+      <button class="btn btn-ghost" id="resetBtn">Ripristina default</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="mq-preview" id="prev">
+      <img class="plogo" id="prevLogo" src="" alt="">
+      <div class="mascot"><span class="emo" id="prevMascot">🎭</span></div>
+      <h1 class="ptitle" id="prevTitle">Masquinator</h1>
+      <p class="psub" id="prevSub">Il Genio del Masque</p>
+      <p class="pbubble" id="prevBubble">"Accomodati…"</p>
+      <button class="pbtn pbtn-gold" id="prevButton">Inizia l'Atto</button>
+      <button class="pbtn">Una commedia rilassata</button>
+      <div class="plate">
+        <span class="cat">La tua cena</span>
+        <h3 class="ttl"><span style="opacity:.8;font-weight:300">1x</span> Frittatina di pasta <span class="price">6€</span></h3>
+        <p class="desc">e colatura di alici</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =======================================================================
+   PASSPHRASE (solo deterrente, NON sicurezza). Lascia "" per disattivarla.
+   Per protezione vera: file in locale, oppure Cloudflare Access / .htaccess.
+   ======================================================================= */
+const EDITOR_PASS = "";
+
+/* ---- DEFAULT (allineato a theme.js e al copione di script.js) ---- */
+const DEFAULT_COPY = {
+  start:{ bubble:"\"Accomodati. Rispondi a 6 semplici domande e lascerò che sia il palcoscenico a servirti la cena perfetta.\"", button:"Inizia l'Atto" },
+  questions:[
+    {text:"Quanti siete a sedere al mio tavolo stasera?",answers:["Da solo","In coppia","Siamo in 3 o più"]},
+    {text:"Se questa serata fosse una pellicola, di che genere staremmo parlando?",answers:["Una commedia rilassata","Un noir di pura eleganza","Un fantasy speziato","Un'avventura selvaggia"]},
+    {text:"Dove desideri viaggiare con la portata principale?",answers:["Voglio sentire il mare","Carne, brace e cose serie","Sfizi, fritti e golosità","Non lo so, sorprendimi tu"]},
+    {text:"Come immagini il sapore al primissimo morso?",answers:["Delicato, in perfetto equilibrio","Sapido e di carattere","Avvolto da spezie e fumo","Un comfort puro e cremoso"]},
+    {text:"E per inumidire le labbra, in che direzione andiamo?",answers:["Vino bianco o rosato, bello fresco","Un vino rosso importante","Un cocktail fresco e vivace","Un drink serio, di spessore","Qualcosa di analcolico"]},
+    {text:"Dimmi la verità... quanto ti va di osare con me?",answers:["Poco, cerco una carezza sicura","Abbastanza, mi fido","Molto, fammi divertire","Totalmente. Fai la tua magia."]}
+  ]
+};
+const DEFAULT_THEME = {
+  colors:{bg:"#07070a",spotlight:"#2a1111",primary:"#c5a059",primaryHover:"#e0bc75",textLight:"#f4ebd8",textMuted:"#8c8273"},
+  background:{type:"spotlight",src:"",overlay:0.55},
+  fonts:{serif:"Playfair Display",sans:"Inter",googleHref:"https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap",titleWeight:"bold",bodyWeight:"normal",titleItalic:true,bodyItalic:false,sizeTitle:34,sizeSubtitle:13,sizeDialog:19},
+  shape:{radiusBtn:50,radiusPlate:0,borderWidth:1,btnGap:12,btnPadY:18},
+  logo:{show:false,src:""},
+  mascotte:{type:"emoji",emoji:"🎭",src:""},
+  text:{appTitle:"Masquinator",subtitle:"Il Genio del Masque"},
+  copy:structuredClone(DEFAULT_COPY)
+};
+const SERIF_FONTS=["Playfair Display","Abril Fatface","Aleo","Alfa Slab One","Amiri","Arvo","Bitter","Bodoni Moda","Bree Serif","Cardo","Cinzel","Cinzel Decorative","Cormorant","Cormorant Garamond","Crimson Pro","Crimson Text","DM Serif Display","DM Serif Text","Domine","EB Garamond","Eczar","Enriqueta","Forum","Frank Ruhl Libre","Fraunces","Gilda Display","Gloock","Hahmlet","Italiana","Josefin Slab","Kreon","Libre Baskerville","Libre Caslon Display","Lora","Lustria","Maitree","Marcellus","Marcellus SC","Merriweather","Newsreader","Noto Serif","Old Standard TT","Ovo","Petrona","Playfair Display SC","Prata","PT Serif","Quattrocento","Roboto Serif","Rozha One","Rufina","Sorts Mill Goudy","Source Serif 4","Spectral","Suranna","Tinos","Trocchi","Ultra","Unna","Vollkorn","Yeseva One","Young Serif","Zilla Slab"];
+const SANS_FONTS=["Inter","Albert Sans","Anton","Archivo","Asap","Assistant","Barlow","Barlow Condensed","Be Vietnam Pro","Bebas Neue","Cabin","Catamaran","Chivo","DM Sans","Dosis","Epilogue","Exo 2","Figtree","Fira Sans","Geologica","Gantari","Heebo","Hind","IBM Plex Sans","Instrument Sans","Josefin Sans","Jost","Kanit","Karla","Lato","Lexend","Libre Franklin","Manrope","Montserrat","Mulish","Nunito","Nunito Sans","Onest","Open Sans","Oswald","Outfit","Overpass","Plus Jakarta Sans","Poppins","PT Sans","Public Sans","Quicksand","Raleway","Red Hat Display","Roboto","Rubik","Saira","Schibsted Grotesk","Sora","Source Sans 3","Space Grotesk","Spline Sans","Tajawal","Teko","Titillium Web","Ubuntu","Urbanist","Varela Round","Work Sans"];
+const CUSTOM="— Altro (scrivi il nome) —";
+
+let theme = structuredClone(DEFAULT_THEME);
+
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+function googleHref(serif,sans,tw,bw){
+  const f=n=>n.trim().replace(/ /g,"+");
+  const W={light:"300",normal:"400",medium:"500",bold:"700"};
+  const titleW=W[tw]||"700", bodyW=W[bw]||"400";
+  // Includo sempre 400 e 700 più il peso scelto, e gli assi italic (italic 0;1)
+  const titleAxes=Array.from(new Set(["400","700",titleW])).sort();
+  const bodyAxes=Array.from(new Set(["300","400","500","700",bodyW])).sort();
+  return `https://fonts.googleapis.com/css2?family=${f(serif)}:ital,wght@0,${titleAxes.join(";0,")};1,${titleAxes.join(";1,")}&family=${f(sans)}:ital,wght@0,${bodyAxes.join(";0,")};1,${bodyAxes.join(";1,")}&display=swap`;
+}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800);}
+
+function fillFontSelect(sel,list,current){sel.innerHTML="";[...list,CUSTOM].forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;sel.appendChild(o);});sel.value=list.includes(current)?current:CUSTOM;}
+
+/* ---- anteprima ---- */
+function render(){
+  const p=$("#prev"),c=theme.colors,s=theme.shape,b=theme.background;
+  p.style.setProperty("--mq-bg-dark",c.bg);
+  p.style.setProperty("--mq-gold",c.primary);
+  p.style.setProperty("--mq-gold-hover",c.primaryHover);
+  p.style.setProperty("--mq-text-light",c.textLight);
+  p.style.setProperty("--mq-text-muted",c.textMuted);
+  if(b.type==="image"&&b.src){
+    p.style.setProperty("--mq-spotlight",`linear-gradient(rgba(0,0,0,${b.overlay}),rgba(0,0,0,${b.overlay})), url("${b.src}")`);
+  }else{
+    p.style.setProperty("--mq-spotlight",`radial-gradient(circle at 50% 30%, ${c.spotlight} 0%, ${c.bg} 65%)`);
+  }
+  p.style.setProperty("--mq-radius-btn",s.radiusBtn+"px");
+  p.style.setProperty("--mq-radius-plate",s.radiusPlate+"px");
+  p.style.setProperty("--mq-border-width",s.borderWidth+"px");
+  p.style.setProperty("--mq-btn-gap",s.btnGap+"px");
+  p.style.setProperty("--mq-btn-pad-y",s.btnPadY+"px");
+  p.style.setProperty("--font-serif",`'${theme.fonts.serif}', serif`);
+  p.style.setProperty("--font-sans",`'${theme.fonts.sans}', sans-serif`);
+  const W={light:300,normal:400,medium:500,bold:700};
+  p.style.setProperty("--mq-title-weight",W[theme.fonts.titleWeight]||700);
+  p.style.setProperty("--mq-body-weight",W[theme.fonts.bodyWeight]||400);
+  p.style.setProperty("--mq-title-italic",theme.fonts.titleItalic?"italic":"normal");
+  p.style.setProperty("--mq-body-italic",theme.fonts.bodyItalic?"italic":"normal");
+  p.style.setProperty("--mq-size-title",theme.fonts.sizeTitle+"px");
+  p.style.setProperty("--mq-size-subtitle",theme.fonts.sizeSubtitle+"px");
+  p.style.setProperty("--mq-size-dialog",theme.fonts.sizeDialog+"px");
+
+  theme.fonts.googleHref=googleHref(theme.fonts.serif,theme.fonts.sans,theme.fonts.titleWeight,theme.fonts.bodyWeight);
+  $("#prev-font").href=theme.fonts.googleHref;
+
+  $("#prevTitle").textContent=theme.text.appTitle||"Masquinator";
+  $("#prevSub").textContent=theme.text.subtitle||"";
+  $("#prevBubble").textContent=theme.copy.start.bubble||"";
+  $("#prevButton").textContent=theme.copy.start.button||"Inizia l'Atto";
+
+  const pl=$("#prevLogo");
+  if(theme.logo.show&&theme.logo.src){pl.src=theme.logo.src;pl.style.display="block";}else pl.style.display="none";
+
+  const mh=$("#prev .mascot");
+  if(theme.mascotte.type==="image"&&theme.mascotte.src){mh.innerHTML=`<img src="${theme.mascotte.src}" alt="">`;}
+  else{mh.innerHTML=`<span class="emo">${theme.mascotte.emoji||"🎭"}</span>`;}
+}
+
+/* ---- costruisce i campi per i testi delle domande ---- */
+function buildQEditor(){
+  const host=$("#qEditor");host.innerHTML="";
+  theme.copy.questions.forEach((q,qi)=>{
+    const d=document.createElement("details");
+    let answers=q.answers.map((a,ai)=>
+      `<div class="ans-label">Risposta ${ai+1}</div><input type="text" data-q="${qi}" data-a="${ai}" value="${a.replace(/"/g,'&quot;')}">`).join("");
+    d.innerHTML=`<summary>Domanda ${qi+1}</summary><div class="inner">
+      <div class="field"><label>Testo della domanda</label><input type="text" data-q="${qi}" data-a="text" value="${q.text.replace(/"/g,'&quot;')}"></div>
+      ${answers}</div>`;
+    host.appendChild(d);
+  });
+  host.querySelectorAll("input[data-q]").forEach(inp=>inp.addEventListener("input",e=>{
+    const qi=+e.target.dataset.q,a=e.target.dataset.a;
+    if(a==="text")theme.copy.questions[qi].text=e.target.value;
+    else theme.copy.questions[qi].answers[+a]=e.target.value;
+  }));
+}
+
+/* ---- sincronizza i controlli ---- */
+function syncControls(){
+  $$("[data-color]").forEach(i=>i.value=theme.colors[i.dataset.color]);
+  $$("[data-hex]").forEach(i=>i.value=theme.colors[i.dataset.hex]);
+  setBgType(theme.background.type);
+  $("#bgUrl").value=theme.background.src.startsWith("http")?theme.background.src:"";
+  $("#bgOv").value=theme.background.overlay;$("#bgOvV").textContent=theme.background.overlay;
+  fillFontSelect($("#serifSel"),SERIF_FONTS,theme.fonts.serif);
+  fillFontSelect($("#sansSel"),SANS_FONTS,theme.fonts.sans);
+  toggleCustom("#serifSel","#serifCustom",theme.fonts.serif,SERIF_FONTS);
+  toggleCustom("#sansSel","#sansCustom",theme.fonts.sans,SANS_FONTS);
+  $$("#twSeg button").forEach(b=>b.classList.toggle("on",b.dataset.tw===theme.fonts.titleWeight));
+  $$("#bwSeg button").forEach(b=>b.classList.toggle("on",b.dataset.bw===theme.fonts.bodyWeight));
+  $("#titleItalic").checked=!!theme.fonts.titleItalic;
+  $("#bodyItalic").checked=!!theme.fonts.bodyItalic;
+  $("#szT").value=theme.fonts.sizeTitle;$("#szTV").textContent=theme.fonts.sizeTitle+"px";
+  $("#szS").value=theme.fonts.sizeSubtitle;$("#szSV").textContent=theme.fonts.sizeSubtitle+"px";
+  $("#szD").value=theme.fonts.sizeDialog;$("#szDV").textContent=theme.fonts.sizeDialog+"px";
+  $("#rbtn").value=theme.shape.radiusBtn;$("#rbtnV").textContent=theme.shape.radiusBtn+"px";
+  $("#rplate").value=theme.shape.radiusPlate;$("#rplateV").textContent=theme.shape.radiusPlate+"px";
+  $("#bw").value=theme.shape.borderWidth;$("#bwV").textContent=theme.shape.borderWidth+"px";
+  $("#gap").value=theme.shape.btnGap;$("#gapV").textContent=theme.shape.btnGap+"px";
+  $("#pad").value=theme.shape.btnPadY;$("#padV").textContent=theme.shape.btnPadY+"px";
+  $("#logoShow").checked=theme.logo.show;
+  $("#logoUrl").value=theme.logo.src.startsWith("http")?theme.logo.src:"";
+  $("#mascEmoji").value=theme.mascotte.emoji;
+  setMascType(theme.mascotte.type);
+  $("#txtTitle").value=theme.text.appTitle;
+  $("#txtSub").value=theme.text.subtitle;
+  $("#startBubble").value=theme.copy.start.bubble;
+  $("#startButton").value=theme.copy.start.button;
+  buildQEditor();
+}
+function toggleCustom(selSel,custSel,val,list){const isC=!list.includes(val);$(custSel).style.display=isC?"block":"none";if(isC)$(custSel).value=val;}
+function setMascType(t){$$("#mascSeg button").forEach(b=>b.classList.toggle("on",b.dataset.masc===t));$("#mascEmojiField").style.display=t==="emoji"?"block":"none";$("#mascImgField").style.display=t==="image"?"block":"none";}
+function setBgType(t){$$("#bgSeg button").forEach(b=>b.classList.toggle("on",b.dataset.bg===t));$("#bgImageFields").style.display=t==="image"?"block":"none";}
+
+/* ---- listener ---- */
+$$("[data-color]").forEach(i=>i.addEventListener("input",e=>{const k=e.target.dataset.color;theme.colors[k]=e.target.value;$(`[data-hex="${k}"]`).value=e.target.value;render();}));
+$$("[data-hex]").forEach(i=>i.addEventListener("change",e=>{const k=e.target.dataset.hex,v=e.target.value.trim();if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)){theme.colors[k]=v;$(`[data-color="${k}"]`).value=v;render();}}));
+$$("#bgSeg button").forEach(b=>b.addEventListener("click",()=>{theme.background.type=b.dataset.bg;setBgType(b.dataset.bg);render();}));
+$("#bgUrl").addEventListener("input",e=>{if(e.target.value.trim()){theme.background.src=e.target.value.trim();theme.background.type="image";setBgType("image");}render();});
+$("#bgFile").addEventListener("change",e=>readImage(e,src=>{theme.background.src=src;theme.background.type="image";setBgType("image");render();}));
+$("#bgOv").addEventListener("input",e=>{theme.background.overlay=+e.target.value;$("#bgOvV").textContent=e.target.value;render();});
+$("#serifSel").addEventListener("change",e=>{if(e.target.value===CUSTOM){$("#serifCustom").style.display="block";$("#serifCustom").focus();}else{$("#serifCustom").style.display="none";theme.fonts.serif=e.target.value;render();}});
+$("#sansSel").addEventListener("change",e=>{if(e.target.value===CUSTOM){$("#sansCustom").style.display="block";$("#sansCustom").focus();}else{$("#sansCustom").style.display="none";theme.fonts.sans=e.target.value;render();}});
+$("#serifCustom").addEventListener("input",e=>{if(e.target.value.trim()){theme.fonts.serif=e.target.value.trim();render();}});
+$("#sansCustom").addEventListener("input",e=>{if(e.target.value.trim()){theme.fonts.sans=e.target.value.trim();render();}});
+$$("#twSeg button").forEach(b=>b.addEventListener("click",()=>{theme.fonts.titleWeight=b.dataset.tw;$$("#twSeg button").forEach(x=>x.classList.toggle("on",x===b));render();}));
+$$("#bwSeg button").forEach(b=>b.addEventListener("click",()=>{theme.fonts.bodyWeight=b.dataset.bw;$$("#bwSeg button").forEach(x=>x.classList.toggle("on",x===b));render();}));
+$("#titleItalic").addEventListener("change",e=>{theme.fonts.titleItalic=e.target.checked;render();});
+$("#bodyItalic").addEventListener("change",e=>{theme.fonts.bodyItalic=e.target.checked;render();});
+$("#szT").addEventListener("input",e=>{theme.fonts.sizeTitle=+e.target.value;$("#szTV").textContent=e.target.value+"px";render();});
+$("#szS").addEventListener("input",e=>{theme.fonts.sizeSubtitle=+e.target.value;$("#szSV").textContent=e.target.value+"px";render();});
+$("#szD").addEventListener("input",e=>{theme.fonts.sizeDialog=+e.target.value;$("#szDV").textContent=e.target.value+"px";render();});
+$("#rbtn").addEventListener("input",e=>{theme.shape.radiusBtn=+e.target.value;$("#rbtnV").textContent=e.target.value+"px";render();});
+$("#rplate").addEventListener("input",e=>{theme.shape.radiusPlate=+e.target.value;$("#rplateV").textContent=e.target.value+"px";render();});
+$("#bw").addEventListener("input",e=>{theme.shape.borderWidth=+e.target.value;$("#bwV").textContent=e.target.value+"px";render();});
+$("#gap").addEventListener("input",e=>{theme.shape.btnGap=+e.target.value;$("#gapV").textContent=e.target.value+"px";render();});
+$("#pad").addEventListener("input",e=>{theme.shape.btnPadY=+e.target.value;$("#padV").textContent=e.target.value+"px";render();});
+$("#logoShow").addEventListener("change",e=>{theme.logo.show=e.target.checked;render();});
+$("#logoUrl").addEventListener("input",e=>{if(e.target.value.trim()){theme.logo.src=e.target.value.trim();theme.logo.show=true;$("#logoShow").checked=true;}render();});
+$("#logoFile").addEventListener("change",e=>readImage(e,src=>{theme.logo.src=src;theme.logo.show=true;$("#logoShow").checked=true;render();}));
+$$("#mascSeg button").forEach(b=>b.addEventListener("click",()=>{theme.mascotte.type=b.dataset.masc;setMascType(b.dataset.masc);render();}));
+$("#mascEmoji").addEventListener("input",e=>{theme.mascotte.emoji=e.target.value||"🎭";render();});
+$("#mascUrl").addEventListener("input",e=>{if(e.target.value.trim()){theme.mascotte.src=e.target.value.trim();render();}});
+$("#mascFile").addEventListener("change",e=>readImage(e,src=>{theme.mascotte.src=src;render();}));
+$("#txtTitle").addEventListener("input",e=>{theme.text.appTitle=e.target.value;render();});
+$("#txtSub").addEventListener("input",e=>{theme.text.subtitle=e.target.value;render();});
+$("#startBubble").addEventListener("input",e=>{theme.copy.start.bubble=e.target.value;render();});
+$("#startButton").addEventListener("input",e=>{theme.copy.start.button=e.target.value;render();});
+
+function readImage(e,cb){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>cb(r.result);r.readAsDataURL(f);}
+
+/* ---- export / import ---- */
+function buildThemeJS(){theme.fonts.googleHref=googleHref(theme.fonts.serif,theme.fonts.sans,theme.fonts.titleWeight,theme.fonts.bodyWeight);
+  return `/* Generato con Masque Studio. Sostituisci theme.js con questo file. */\nwindow.MQ_THEME = ${JSON.stringify(theme,null,2)};\n`;}
+/* Modale di fallback: in file:// download/clipboard sono bloccati, qui mostro
+   il codice in una textarea pronto per essere copiato a mano o salvato. */
+function showCodeFallback(code, msg){
+  let m=$("#mq-fallback");
+  if(!m){
+    m=document.createElement("div");m.id="mq-fallback";
+    m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px";
+    m.innerHTML=`<div style="background:var(--ui-panel);border:1px solid var(--ui-line);border-radius:12px;max-width:720px;width:100%;padding:18px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><strong id="mq-fb-msg" style="color:var(--ui-gold)"></strong>
+        <button class="btn btn-ghost" style="padding:6px 12px" id="mq-fb-close">Chiudi</button></div>
+      <p class="hint" style="margin:0">Selezione e copia: <kbd>${navigator.platform.indexOf("Mac")>=0?"⌘":"Ctrl"}+A</kbd> poi <kbd>${navigator.platform.indexOf("Mac")>=0?"⌘":"Ctrl"}+C</kbd>. Poi incollalo in <code>theme.js</code> sostituendo l'intero file.</p>
+      <textarea id="mq-fb-code" readonly style="min-height:340px;font-family:monospace;font-size:12px"></textarea></div>`;
+    document.body.appendChild(m);
+    m.querySelector("#mq-fb-close").addEventListener("click",()=>m.remove());
+  }
+  m.querySelector("#mq-fb-msg").textContent=msg;
+  const ta=m.querySelector("#mq-fb-code"); ta.value=code; ta.focus(); ta.select();
+}
+
+$("#dlBtn").addEventListener("click",()=>{
+  const code=buildThemeJS();
+  try{
+    const blob=new Blob([code],{type:"text/javascript"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download="theme.js";
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast("theme.js scaricato");
+  }catch(err){
+    // file:// blocca i blob link → mostro il codice da copiare a mano
+    showCodeFallback(code,"Download bloccato dal browser (file://). Copia il codice qui sotto.");
+  }
+});
+$("#copyBtn").addEventListener("click",async()=>{
+  const code=buildThemeJS();
+  try{
+    if(!navigator.clipboard||!window.isSecureContext) throw new Error("no-clipboard");
+    await navigator.clipboard.writeText(code);
+    toast("Codice copiato");
+  }catch{
+    showCodeFallback(code,"Copia automatica non disponibile (file://). Copia manualmente:");
+  }
+});
+$("#resetBtn").addEventListener("click",()=>{theme=structuredClone(DEFAULT_THEME);syncControls();render();toast("Tema ripristinato");});
+$("#importFile").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const w={};new Function("window",r.result)(w);if(!w.MQ_THEME)throw 0;
+    theme=structuredClone(DEFAULT_THEME);
+    for(const k of ["colors","background","fonts","shape","logo","mascotte","text"])theme[k]=Object.assign(structuredClone(DEFAULT_THEME[k]),w.MQ_THEME[k]||{});
+    const ic=w.MQ_THEME.copy||{};
+    theme.copy.start=Object.assign(structuredClone(DEFAULT_COPY.start),ic.start||{});
+    if(Array.isArray(ic.questions)&&ic.questions.length)
+      theme.copy.questions=DEFAULT_COPY.questions.map((dq,i)=>({text:(ic.questions[i]&&ic.questions[i].text)||dq.text,answers:dq.answers.map((da,j)=>(ic.questions[i]&&ic.questions[i].answers&&ic.questions[i].answers[j])||da)}));
+    syncControls();render();toast("Tema importato");
+  }catch{toast("File non valido");}};r.readAsText(f);});
+
+/* ---- cancello opzionale ---- */
+if(location.protocol==="file:") $("#file-warning").style.display="block";
+function startEditor(){syncControls();render();}
+if(EDITOR_PASS){
+  $("#gate").style.display="flex";
+  const tryEnter=()=>{if($("#gatePass").value===EDITOR_PASS){$("#gate").style.display="none";startEditor();}else toast("Passphrase errata");};
+  $("#gateBtn").addEventListener("click",tryEnter);
+  $("#gatePass").addEventListener("keydown",e=>{if(e.key==="Enter")tryEnter();});
+}else{startEditor();}
+</script>
+</body>
+</html>

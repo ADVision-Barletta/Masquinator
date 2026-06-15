@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masque Matchmaker</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link id="mq-font-link" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- =======================================================================
+       WIDGET MASQUINATOR — incolla da qui...
+       ======================================================================= -->
+
+  <!-- 1) Lanciatore (in basso a sinistra, stile assistente) -->
+  <button id="mq-launcher" class="mq-launcher" aria-label="Apri il Genio del Masque" aria-expanded="false" onclick="mq_toggleWidget()">
+    <span class="mq-mascot-emoji">🎭</span>
+  </button>
+
+  <!-- 2) Overlay + pannello modale -->
+  <div id="mq-overlay" class="mq-overlay">
+    <div id="mq-modal" class="mq-modal" role="dialog" aria-modal="true" aria-label="Masquinator">
+      <button class="mq-close" aria-label="Chiudi" onclick="mq_closeWidget()">&times;</button>
+
+      <div id="mq-app">
+
+        <div id="mq-start" class="mq-screen mq-active">
+          <img id="mq-logo" class="mq-logo" src="" alt="">
+          <div class="mq-mascot-container mq-floating">
+            <div class="mq-mascot-emoji">🎭</div>
+          </div>
+          <h1 class="mq-title-serif" data-mq="app-title">Masquinator</h1>
+          <p class="mq-subtitle" data-mq="subtitle">Il Genio del Masque</p>
+
+          <div class="mq-speech-bubble" data-mq="start-bubble">
+            "Accomodati. Rispondi a 6 semplici domande e lascerò che sia il palcoscenico a servirti la cena perfetta."
+          </div>
+
+          <button class="mq-btn mq-btn-gold" data-mq="start-button" onclick="mq_startQuiz()">Inizia l'Atto</button>
+        </div>
+
+        <div id="mq-quiz" class="mq-screen">
+          <div class="mq-header-progress">
+            <button id="mq-back" class="mq-nav-back" onclick="mq_goBack()" aria-label="Torna alla domanda precedente">‹</button>
+            <span>ATTO <span id="mq-current-num">1</span> DI 6</span>
+            <div class="mq-progress-bar"><div id="mq-progress-fill"></div></div>
+          </div>
+
+          <div class="mq-mascot-container mq-mascot-small mq-floating">
+            <div class="mq-mascot-emoji">🎭</div>
+          </div>
+
+          <div class="mq-speech-bubble">
+            <h2 id="mq-question-text" class="mq-question-serif">Domanda?</h2>
+          </div>
+
+          <div id="mq-answers" class="mq-answers-stack">
+            </div>
+
+          <div class="mq-quiz-footer">
+            <button class="mq-btn-text" onclick="mq_randomChoice()">Lascia fare al Genio</button>
+            <button class="mq-btn-text" onclick="mq_resetToStart()">Ricomincia da capo</button>
+          </div>
+        </div>
+
+        <div id="mq-loading" class="mq-screen mq-center-all">
+          <div class="mq-mascot-container mq-shaking">
+            <div class="mq-mascot-emoji">🎭</div>
+          </div>
+          <p class="mq-loading-text">Sto interrogando gli spiriti della cucina...</p>
+        </div>
+
+        <div id="mq-results" class="mq-screen">
+          <div class="mq-mascot-container mq-mascot-tiny">
+            <div class="mq-mascot-emoji">🎭</div>
+          </div>
+
+          <h2 id="mq-result-desc" class="mq-title-serif mq-result-intro">La rivelazione:</h2>
+
+          <div id="mq-menu-output" class="mq-menu-list">
+            </div>
+
+          <div class="mq-footer">
+            <p class="mq-staff-note">Mostra questa pergamena allo staff.</p>
+            <button class="mq-btn mq-btn-outline" onclick="mq_resetToStart()">Cala il Sipario (Riprova)</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Ordine importante: prima il tema, poi la logica -->
+  <script src="theme.js"></script>
+  <script src="script.js"></script>
+  <!-- =======================================================================
+       ...fino a qui. Servono inoltre i file style.css, theme.js, script.js
+       e il <link> dei font nel <head>.
+       ======================================================================= -->
+
+</body>
+</html>

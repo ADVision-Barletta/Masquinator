@@ -1,0 +1,18 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+    "mcp": {
+        "novamira-masquearteeristo": {
+            "type": "local",
+            "command": [
+                "npx",
+                "-y",
+                "@automattic/mcp-wordpress-remote@latest"
+            ],
+            "environment": {
+                "WP_API_URL": "https://www.masquearteeristoro.it/wp-json/mcp/novamira",
+                "WP_API_USERNAME": "francescodicandia",
+                "WP_API_PASSWORD": "XREXhO2gqaRW9lovFsL4BYCt"
+            }
+        }
+    }
+}
