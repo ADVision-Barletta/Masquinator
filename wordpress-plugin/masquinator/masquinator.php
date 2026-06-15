@@ -3,7 +3,7 @@
  * Plugin Name:       Masquinator
  * Plugin URI:        https://github.com/Masquinator
  * Description:       Il Genio del Masque — Widget interattivo per raccomandazioni menu ristorante. Rispondi a 6 domande e scopri la cena perfetta.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Masquinator
@@ -22,7 +22,7 @@ namespace Masquinator;
 
 defined('ABSPATH') || exit;
 
-define('MASQUINATOR_VERSION', '1.0.0');
+define('MASQUINATOR_VERSION', '1.1.0');
 define('MASQUINATOR_FILE', __FILE__);
 define('MASQUINATOR_PATH', plugin_dir_path(__FILE__));
 define('MASQUINATOR_URL', plugin_dir_url(__FILE__));

@@ -17,6 +17,7 @@
   var mq_isSharing = false;
   var mq_peopleCount = 1;
   var mq_activeQuestions = [];
+  var mq_lastResults = null;
 
   var mq_questions = [
     {
@@ -467,8 +468,55 @@
       outputContainer.appendChild(div);
     });
 
+    mq_lastResults = finalSelection.slice();
+
     window.scrollTo(0, 0);
     setTimeout(function() { mq_showScreen('results'); }, 1200);
+  }
+
+  function mq_encodeResults() {
+    if (!mq_lastResults || mq_lastResults.length === 0) return '';
+    var compact = mq_lastResults.map(function(item) {
+      return { t: item.titolo, c: item.ui_category, q: item.qty || '1x', p: item.prezzo || '', d: item.descrizione || '' };
+    });
+    try {
+      var json = JSON.stringify(compact);
+      var base64 = btoa(encodeURIComponent(json));
+      return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function mq_buildShareUrl() {
+    var data = mq_encodeResults();
+    if (!data) return '';
+    var base = window.location.href.split('?')[0].split('#')[0];
+    return base + '?mq_data=' + encodeURIComponent(data);
+  }
+
+  window.mq_shareResults = function() {
+    var url = mq_buildShareUrl();
+    if (!url) return;
+    if (navigator.share) {
+      navigator.share({ title: 'Masquinator', text: 'La mia pergamena dal Genio del Masque', url: url }).catch(function() {});
+    } else {
+      mq_showQR(url);
+    }
+  };
+
+  window.mq_generateQR = function() {
+    var url = mq_buildShareUrl();
+    if (!url) return;
+    mq_showQR(url);
+  };
+
+  function mq_showQR(url) {
+    var qrImg = document.getElementById('mq-qr-img');
+    var qrLink = document.getElementById('mq-qr-link');
+    if (qrImg) qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(url);
+    if (qrLink) qrLink.href = url;
+    mq_showScreen('qrcode');
   }
 
   function mq_formatPrice(item) {
