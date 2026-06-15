@@ -1,0 +1,17 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "masquinator/widget",
+    "version": "1.0.0",
+    "title": "Masque Matchmaker",
+    "category": "widgets",
+    "description": "Inserisce il widget Masquinator per raccomandazioni menu interattive.",
+    "icon": "smiley",
+    "supports": {
+        "html": false,
+        "align": false
+    },
+    "textdomain": "masquinator",
+    "editorScript": "file:./index.js",
+    "render": "file:./render.php"
+}
