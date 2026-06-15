@@ -84,7 +84,7 @@ class Shortcode {
                             <div id="mq-menu-output" class="mq-menu-list"></div>
 
                             <div class="mq-footer">
-                                <button class="mq-btn mq-btn-gold" onclick="mq_downloadImage()"><?php esc_html_e('Scarica la pergamena', 'masquinator'); ?></button>
+                                <button class="mq-btn mq-btn-gold" id="mq-download-btn"><?php esc_html_e('Scarica la pergamena', 'masquinator'); ?></button>
                                 <button class="mq-btn mq-btn-outline" onclick="mq_resetToStart()"><?php esc_html_e('Cala il Sipario (Riprova)', 'masquinator'); ?></button>
                             </div>
                         </div>

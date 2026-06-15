@@ -491,7 +491,7 @@
     return lines;
   }
 
-  window.mq_downloadImage = function() {
+  var mq_downloadImage = function() {
     if (!mq_lastResults || mq_lastResults.length === 0) return;
     var items = mq_lastResults;
 
@@ -617,6 +617,8 @@
     });
   };
 
+  window.mq_downloadImage = mq_downloadImage;
+
   function mq_formatPrice(item) {
     if (item.priceOverride) {
       return '<span class="mq-price-note">(' + item.priceOverride + ')</span>';
@@ -710,5 +712,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     mq_applyTheme();
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') mq_closeWidget(); });
+    var downloadBtn = document.getElementById('mq-download-btn');
+    if (downloadBtn) downloadBtn.addEventListener('click', mq_downloadImage);
   });
 })();
