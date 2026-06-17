@@ -46,21 +46,13 @@ class Importer {
                     )); ?></p>
                 </div>
             <?php endif; ?>
-            <?php if (isset($_GET['skipped'])): ?>
-                <div class="notice notice-warning is-dismissible">
-                    <p><?php echo esc_html(sprintf(
-                        __('Saltati %d piatti già esistenti (stesso titolo).', 'masquinator'),
-                        intval($_GET['skipped'])
-                    )); ?></p>
-                </div>
-            <?php endif; ?>
             <?php if (isset($_GET['error'])): ?>
                 <div class="notice notice-error is-dismissible">
                     <p><?php echo esc_html($_GET['error']); ?></p>
                 </div>
             <?php endif; ?>
 
-            <p><?php esc_html_e('Importa i piatti dal Google Sheets CSV configurato nelle impostazioni nel nuovo Custom Post Type. I piatti già esistenti con lo stesso titolo verranno saltati.', 'masquinator'); ?></p>
+            <p><?php esc_html_e('Importa i piatti dal Google Sheets CSV nel Custom Post Type. ATTENZIONE: tutti i piatti esistenti verranno eliminati e sostituiti.', 'masquinator'); ?></p>
 
             <p><strong><?php esc_html_e('URL CSV configurato:', 'masquinator'); ?></strong><br>
             <code><?php echo esc_html($csv_url ?: __('Nessun URL configurato', 'masquinator')); ?></code></p>
@@ -103,8 +95,17 @@ class Importer {
         $headers = $this->parse_csv_line($lines[0]);
         $norm = array_map([$this, 'normalize_header'], $headers);
 
+        $existing = get_posts([
+            'post_type' => 'mq_menu_item',
+            'post_status' => 'any',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+        ]);
+        foreach ($existing as $id) {
+            wp_delete_post($id, true);
+        }
+
         $imported = 0;
-        $skipped = 0;
 
         for ($i = 1; $i < count($lines); $i++) {
             if (!trim($lines[$i])) continue;
@@ -112,19 +113,6 @@ class Importer {
             $item = $this->map_item($norm, $row);
 
             if (empty($item['titolo']) || empty($item['categoria'])) continue;
-
-            $exists = get_posts([
-                'post_type' => 'mq_menu_item',
-                'title'     => $item['titolo'],
-                'post_status' => 'any',
-                'posts_per_page' => 1,
-                'fields'    => 'ids',
-            ]);
-
-            if (!empty($exists)) {
-                $skipped++;
-                continue;
-            }
 
             $post_id = wp_insert_post([
                 'post_title'   => $item['titolo'],
@@ -136,7 +124,7 @@ class Importer {
             if (!$post_id || is_wp_error($post_id)) continue;
             $imported++;
 
-            if (!empty($item['categoria'])) update_post_meta($post_id, '_mq_categoria', $item['categoria']);
+            if (!empty($item['categoria'])) update_post_meta($post_id, '_mq_categoria', strtolower($item['categoria']));
             if (!empty($item['sezione']))   update_post_meta($post_id, '_mq_sezione', $item['sezione']);
             if (!empty($item['prezzo']))    update_post_meta($post_id, '_mq_prezzo', $item['prezzo']);
             if (!empty($item['tag']))       update_post_meta($post_id, '_mq_tag', $item['tag']);
@@ -144,7 +132,6 @@ class Importer {
 
         $redirect = add_query_arg([
             'imported' => $imported,
-            'skipped'  => $skipped,
         ], admin_url('edit.php?post_type=mq_menu_item&page=mq-import-csv'));
 
         wp_redirect($redirect);

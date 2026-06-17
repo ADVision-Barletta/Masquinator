@@ -18,6 +18,23 @@ class CPT {
         add_filter('manage_mq_menu_item_posts_columns', [$this, 'admin_columns']);
         add_action('manage_mq_menu_item_posts_custom_column', [$this, 'admin_columns_content'], 10, 2);
         add_filter('manage_edit-mq_menu_item_sortable_columns', [$this, 'admin_sortable_columns']);
+
+        add_action('admin_menu', [$this, 'add_settings_submenu'], 20);
+    }
+
+    public function add_settings_submenu(): void {
+        $hook = add_submenu_page(
+            'edit.php?post_type=mq_menu_item',
+            __('Fonte Dati', 'masquinator'),
+            __('Fonte Dati', 'masquinator'),
+            'manage_options',
+            'masquinator-fonte-dati',
+            '__return_empty_string'
+        );
+        add_action("load-$hook", function () {
+            wp_safe_redirect(admin_url('options-general.php?page=masquinator-settings'));
+            exit;
+        });
     }
 
     public function register_post_type(): void {
@@ -74,6 +91,7 @@ class CPT {
     }
 
     public function render_meta_box(\WP_Post $post): void {
+        global $wpdb;
         wp_nonce_field('mq_menu_meta_box', 'mq_menu_meta_nonce');
         $categoria = get_post_meta($post->ID, '_mq_categoria', true);
         $sezione   = get_post_meta($post->ID, '_mq_sezione', true);
@@ -97,9 +115,26 @@ class CPT {
             <tr>
                 <th><label for="mq_sezione"><?php esc_html_e('Sezione', 'masquinator'); ?></label></th>
                 <td>
-                    <input type="text" id="mq_sezione" name="mq_sezione"
-                           value="<?php echo esc_attr($sezione); ?>" class="regular-text"
-                           placeholder="<?php esc_attr_e('es. Antipasti, Vini Rossi, Cocktail...', 'masquinator'); ?>">
+                    <?php
+                    $existing = $wpdb->get_col("SELECT DISTINCT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_mq_sezione' AND meta_value != '' ORDER BY meta_value ASC");
+                    $show_new = $sezione && !in_array($sezione, $existing, true);
+                    ?>
+                    <select id="mq_sezione" name="mq_sezione" class="regular-text" style="margin-bottom:4px">
+                        <option value="">— <?php esc_attr_e('Seleziona', 'masquinator'); ?> —</option>
+                        <?php foreach ($existing as $s): ?>
+                            <option value="<?php echo esc_attr($s); ?>" <?php selected($sezione, $s); ?>>
+                                <?php echo esc_html($s); ?>
+                            </option>
+                        <?php endforeach; ?>
+                        <option value="__new__" <?php selected($show_new, true); ?>><?php esc_html_e('+ Aggiungi nuova...', 'masquinator'); ?></option>
+                    </select>
+                    <input type="text" id="mq_sezione_new" name="mq_sezione_new"
+                           value="<?php echo $show_new ? esc_attr($sezione) : ''; ?>" class="regular-text" style="<?php echo $show_new ? '' : 'display:none;'; ?>"
+                           placeholder="<?php esc_attr_e('Scrivi nuova sezione...', 'masquinator'); ?>">
+                    <p class="description"><?php esc_html_e('Seleziona una esistente o aggiungine una nuova.', 'masquinator'); ?></p>
+                    <script>
+                    (function(){var s=document.getElementById('mq_sezione'),n=document.getElementById('mq_sezione_new');s.addEventListener('change',function(){n.style.display=this.value==='__new__'?'':'none';if(this.value!=='__new__')n.value='';})})();
+                    </script>
                 </td>
             </tr>
             <tr>
@@ -138,6 +173,9 @@ class CPT {
 
         foreach ($fields as $input => $meta_key) {
             $value = isset($_POST[$input]) ? sanitize_text_field(wp_unslash($_POST[$input])) : '';
+            if ($meta_key === '_mq_sezione' && $value === '__new__') {
+                $value = isset($_POST['mq_sezione_new']) ? sanitize_text_field(wp_unslash($_POST['mq_sezione_new'])) : '';
+            }
             if ($value) {
                 if ($meta_key === '_mq_categoria') {
                     $value = strtolower($value);
