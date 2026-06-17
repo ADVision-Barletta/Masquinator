@@ -10,6 +10,9 @@ class Activator {
     public static function activate(): void {
         self::check_requirements();
         self::set_default_options();
+
+        $cpt = new CPT();
+        $cpt->register_post_type();
         flush_rewrite_rules();
     }
 

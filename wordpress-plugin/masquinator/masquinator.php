@@ -31,6 +31,8 @@ define('MASQUINATOR_BASENAME', plugin_basename(__FILE__));
 require_once MASQUINATOR_PATH . 'includes/class-activator.php';
 require_once MASQUINATOR_PATH . 'includes/class-deactivator.php';
 require_once MASQUINATOR_PATH . 'includes/class-settings.php';
+require_once MASQUINATOR_PATH . 'includes/class-cpt.php';
+require_once MASQUINATOR_PATH . 'includes/class-importer.php';
 require_once MASQUINATOR_PATH . 'includes/class-shortcode.php';
 
 function activate(): void {
@@ -46,6 +48,12 @@ register_deactivation_hook(__FILE__, __NAMESPACE__ . '\\deactivate');
 function init(): void {
     $settings = new Admin\Settings();
     $settings->init();
+
+    $cpt = new CPT();
+    $cpt->init();
+
+    $importer = new Admin\Importer();
+    $importer->init();
 
     $shortcode = new Frontend\Shortcode();
     $shortcode->init();
