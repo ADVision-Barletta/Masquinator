@@ -139,6 +139,9 @@ class CPT {
         foreach ($fields as $input => $meta_key) {
             $value = isset($_POST[$input]) ? sanitize_text_field(wp_unslash($_POST[$input])) : '';
             if ($value) {
+                if ($meta_key === '_mq_categoria') {
+                    $value = strtolower($value);
+                }
                 update_post_meta($post_id, $meta_key, $value);
             } else {
                 delete_post_meta($post_id, $meta_key);
